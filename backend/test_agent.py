@@ -1,11 +1,6 @@
 import asyncio
-import sys
-from pathlib import Path
 
-# Make `app` importable when running as `python -m backend.test_agent` from project root
-sys.path.insert(0, str(Path(__file__).parent))
-
-from app.agents.anthropic_agent import AnthropicAgent
+from backend.app.agents.anthropic_agent import AnthropicAgent
 
 
 async def main() -> None:

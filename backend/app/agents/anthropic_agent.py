@@ -2,8 +2,8 @@ import time
 
 import anthropic
 
-from app.agents.base import BaseAgent
-from app.config import settings
+from backend.app.agents.base import BaseAgent
+from backend.app.config import settings
 
 
 class AnthropicAgent(BaseAgent):
