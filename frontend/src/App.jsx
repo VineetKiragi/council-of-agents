@@ -1,35 +1,79 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import "./App.css";
+import { createSession, getSessions, getSession } from "./services/api";
+import SubmitPanel from "./components/SubmitPanel";
+import DeliberationView from "./components/DeliberationView";
+import ResultPanel from "./components/ResultPanel";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const [currentSession, setCurrentSession] = useState(null);
+  const [pastSessions, setPastSessions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    getSessions()
+      .then(setPastSessions)
+      .catch((err) => setError(err.message));
+  }, []);
+
+  async function handleSubmit(prompt) {
+    setError(null);
+    setLoading(true);
+    try {
+      const session = await createSession(prompt);
+      setCurrentSession(session);
+      setPastSessions((prev) => [session, ...prev]);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSelectSession(sessionId) {
+    setError(null);
+    try {
+      const session = await getSession(sessionId);
+      setCurrentSession(session);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
 
   return (
     <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+      <aside className="app-sidebar">
+        <h2>Past sessions</h2>
+        {pastSessions.length === 0 && (
+          <p style={{ margin: 0, fontSize: "0.82rem", color: "#aaa" }}>None yet</p>
+        )}
+        {pastSessions.map((s) => (
+          <button
+            key={s.id}
+            className={`session-item${currentSession?.id === s.id ? " active" : ""}`}
+            onClick={() => handleSelectSession(s.id)}
+          >
+            <span className="session-item-prompt">{s.prompt}</span>
+            <span className="session-item-meta">{s.status}</span>
+          </button>
+        ))}
+      </aside>
 
-export default App
+      <main className="app-main">
+        <h1>Council of Agents</h1>
+
+        <SubmitPanel onSubmit={handleSubmit} />
+
+        {error && <p className="error-text">{error}</p>}
+
+        {currentSession && (
+          <>
+            <DeliberationView session={currentSession} />
+            <ResultPanel session={currentSession} />
+          </>
+        )}
+      </main>
+    </>
+  );
+}
