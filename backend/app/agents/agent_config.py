@@ -51,7 +51,7 @@ _AGENT_CONFIGS: list[AgentConfig] = [
             "abstract discussions in reality and consider implementation challenges."
         ),
         provider="google",
-        model="gemini-1.5-flash",
+        model="gemini-2.5-flash",
     ),
     AgentConfig(
         role="Devil's Advocate",
