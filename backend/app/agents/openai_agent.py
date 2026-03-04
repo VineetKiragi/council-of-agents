@@ -21,13 +21,14 @@ class OpenAIAgent(BaseAgent):
         self,
         system_prompt: str,
         user_prompt: str,
+        max_tokens: int = 1024,
     ) -> dict[str, str | int | None]:
         start_ms = time.monotonic() * 1000
 
         try:
             response = await self._client.chat.completions.create(
                 model=self.model_name,
-                max_tokens=1024,
+                max_tokens=max_tokens,
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_prompt},

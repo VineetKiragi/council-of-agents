@@ -93,6 +93,7 @@ class DeliberationOrchestrator:
             result = await chairman.generate(
                 system_prompt=chairman_config.system_prompt,
                 user_prompt=chairman_prompt,
+                max_tokens=4096,
             )
             synthesis = result["content"]
 

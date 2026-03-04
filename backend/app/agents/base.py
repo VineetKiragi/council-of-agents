@@ -21,6 +21,7 @@ class BaseAgent(ABC):
         self,
         system_prompt: str,
         user_prompt: str,
+        max_tokens: int = 1024,
     ) -> dict[str, str | int | None]:
         """Call the LLM and return the response.
 

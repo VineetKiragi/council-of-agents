@@ -23,6 +23,7 @@ class GoogleAgent(BaseAgent):
         self,
         system_prompt: str,
         user_prompt: str,
+        max_tokens: int = 2048,
     ) -> dict[str, str | int | None]:
         start_ms = time.monotonic() * 1000
 
@@ -30,13 +31,19 @@ class GoogleAgent(BaseAgent):
             model = genai.GenerativeModel(
                 model_name=self.model_name,
                 system_instruction=system_prompt,
-                generation_config=types.GenerationConfig(max_output_tokens=1024),
+                generation_config=types.GenerationConfig(max_output_tokens=max_tokens),
             )
 
             response = await model.generate_content_async(user_prompt)
 
             latency_ms = int(time.monotonic() * 1000 - start_ms)
-            content = response.text
+            # Join all text parts explicitly — response.text raises on multi-part responses
+            # (e.g. Gemini 2.5 Flash thinking tokens produce a separate part before the answer)
+            content = "".join(
+                part.text
+                for part in response.candidates[0].content.parts
+                if hasattr(part, "text") and part.text
+            )
             usage = response.usage_metadata
             token_usage = usage.total_token_count if usage else None
 
