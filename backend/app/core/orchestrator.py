@@ -20,9 +20,15 @@ Callback = Callable[[dict[str, Any]], Awaitable[None]]
 
 
 class DeliberationOrchestrator:
-    def __init__(self, db: DbSession, callback: Callback | None = None) -> None:
+    def __init__(
+        self,
+        db: DbSession,
+        callback: Callback | None = None,
+        agents: list[BaseAgent] | None = None,
+    ) -> None:
         self.db = db
         self.callback = callback
+        self._agents = agents  # if None, create_all_agents() is called at run time
 
     # ------------------------------------------------------------------
     # Public entry point
@@ -34,7 +40,7 @@ class DeliberationOrchestrator:
         self.db.commit()
         self.db.refresh(session)
 
-        agents = create_all_agents()
+        agents = self._agents if self._agents is not None else create_all_agents()
         configs = get_agent_configs()
 
         # Index 0 is always the Chairman; indices 1-4 are council members.
