@@ -193,6 +193,42 @@ docker compose -f docker/docker-compose.yml down -v
 
 ---
 
+## Testing
+
+### Create the Test Database
+
+Run once as a PostgreSQL superuser before the first test run:
+
+```sql
+CREATE DATABASE council_of_agents_test OWNER council_user;
+```
+
+### Run Tests
+
+```bash
+cd backend
+python -m pytest -v
+```
+
+With coverage:
+
+```bash
+python -m pytest --cov=app -v
+```
+
+### Test Layers
+
+| Layer | File | What it covers |
+|---|---|---|
+| Unit — schema validation | `test_schemas.py` | Pydantic field presence/absence, anonymization contract |
+| Unit — agent config | `test_agents.py` | Config structure, multi-provider design, mock agent interface |
+| Integration — orchestrator | `test_orchestrator.py` | Round logic, message counts, pseudonym assignment — mocked agents, no API calls |
+| Integration — API | `test_api.py` | All REST endpoints against the test database via FastAPI TestClient |
+
+All 22 tests run in under 0.5s with zero LLM API calls. Tests use per-test transaction rollback for isolation — each test starts with a clean database state.
+
+---
+
 ## Project Status
 
-**Phase 5: Complete — MVP**
+**Phase 6: Testing — Complete. Currently working on Phase 7: CI/CD.**

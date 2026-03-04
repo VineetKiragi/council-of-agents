@@ -28,6 +28,11 @@ cd backend && alembic upgrade head
 # Create a new migration (from backend/)
 cd backend && alembic revision --autogenerate -m "description"
 
+# Run tests (from backend/)
+cd backend && python -m pytest -v
+
+# Run tests with coverage (from backend/)
+cd backend && python -m pytest --cov=app -v
 ```
 
 ---
@@ -71,9 +76,16 @@ frontend/             # React + Vite app (SubmitPanel, DeliberationView, ResultP
 
 ## CURRENT STATE
 
-**Phase 5 — complete (MVP)**
+**Phase 6 — complete (Testing)**
 
-All phases complete. Full multi-agent orchestration with 5 agents across 3 providers, 3 rounds of anonymised deliberation, real-time WebSocket streaming, agent identity reveal, session stats with token/cost tracking, markdown rendering, robust error handling, Docker support, and documentation.
+22 tests across 4 files, all passing in ~0.39s with zero API costs. Test database: `council_of_agents_test`. Run with: `cd backend && python -m pytest -v`.
+
+| Layer | File | Tests |
+|---|---|---|
+| Schema validation | `test_schemas.py` | 5 |
+| Agent config + mock interface | `test_agents.py` | 5 |
+| Orchestrator logic (mocked agents) | `test_orchestrator.py` | 4 |
+| API integration (test database) | `test_api.py` | 8 |
 
 | Component | Status |
 |---|---|
@@ -101,6 +113,7 @@ All phases complete. Full multi-agent orchestration with 5 agents across 3 provi
 | Error card styling for failed agent responses | ✅ done |
 | Docker — Dockerfile.backend, Dockerfile.frontend, docker-compose.yml | ✅ done |
 | Final documentation — README with Features + Docker section | ✅ done |
+| Testing — pytest + pytest-asyncio, 22 tests, conftest fixtures, mock agents | ✅ done |
 
 ---
 
@@ -129,3 +142,5 @@ All phases complete. Full multi-agent orchestration with 5 agents across 3 provi
 - `backend/__init__.py` must exist for `backend.app.*` imports to work from project root
 - Google model must be `gemini-2.5-flash` — older names (gemini-1.5-*, gemini-2.0-flash) return 404 on the Cloud Console API key
 - `response.text` on Gemini 2.5 Flash can fail with multi-part responses (thinking tokens); use explicit part-joining instead
+- Test database `council_of_agents_test` must be created manually before the first test run: `CREATE DATABASE council_of_agents_test OWNER council_user;` — run as a PostgreSQL superuser
+- Tests use SQLAlchemy transaction rollback for isolation (`join_transaction_mode="create_savepoint"`) — each test starts with a clean state without truncating tables
