@@ -1,3 +1,12 @@
+"""Manual integration test for the Google Gemini agent adapter.
+
+Run from project root:
+    python -m pytest backend/tests/test_google_agent.py -s -v
+
+Or run directly:
+    python -m backend.tests.test_google_agent
+"""
+
 import asyncio
 
 from backend.app.agents.google_agent import GoogleAgent

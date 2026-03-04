@@ -28,8 +28,6 @@ cd backend && alembic upgrade head
 # Create a new migration (from backend/)
 cd backend && alembic revision --autogenerate -m "description"
 
-# Run manual test agent script (from project root)
-python -m backend.test_agent
 ```
 
 ---
@@ -73,15 +71,9 @@ frontend/             # React + Vite app (SubmitPanel, DeliberationView, ResultP
 
 ## CURRENT STATE
 
-**Phase 1** — complete (project structure, docs, ADRs)
+**Phase 5 — complete (MVP)**
 
-**Phase 2** — complete (backend infrastructure, DB, all agent adapters, REST API)
-
-**Phase 3** — complete (orchestration, WebSocket streaming, React frontend)
-
-**Phase 4** — complete
-
-Full multi-agent orchestration with 5 agents across 3 providers, 3 rounds of anonymised deliberation, real-time WebSocket streaming, agent identity reveal, session stats with token/cost tracking, markdown rendering, and robust error handling throughout.
+All phases complete. Full multi-agent orchestration with 5 agents across 3 providers, 3 rounds of anonymised deliberation, real-time WebSocket streaming, agent identity reveal, session stats with token/cost tracking, markdown rendering, robust error handling, Docker support, and documentation.
 
 | Component | Status |
 |---|---|
@@ -107,10 +99,8 @@ Full multi-agent orchestration with 5 agents across 3 providers, 3 rounds of ano
 | Agent identity reveal (GET /reveal → colour-coded provider badges) | ✅ done |
 | Markdown rendering (react-markdown + remark-gfm) | ✅ done |
 | Error card styling for failed agent responses | ✅ done |
-| Docker / containerisation | ❌ not built |
-| Final documentation | ❌ not built |
-
-**Next up:** Phase 5 — Docker (backend + frontend + PostgreSQL), final documentation
+| Docker — Dockerfile.backend, Dockerfile.frontend, docker-compose.yml | ✅ done |
+| Final documentation — README with Features + Docker section | ✅ done |
 
 ---
 

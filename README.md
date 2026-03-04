@@ -4,6 +4,18 @@ A multi-agent deliberation framework where AI agents from different LLM provider
 
 ---
 
+## Features
+
+- **Multi-agent deliberation** — 5 agents debate across 3 structured rounds (initial positions → critique → final positions) then a Chairman synthesises a decision
+- **3 LLM providers** — Anthropic (Claude), OpenAI (GPT), and Google (Gemini) agents in the same council
+- **Anonymized discussion** — agents don't know each other's identities or providers during deliberation
+- **Real-time WebSocket streaming** — messages appear in the UI as each agent responds
+- **Agent reveal** — after deliberation, provider identity and role are revealed with colour-coded badges
+- **Session stats / LLMOps** — per-agent and per-round token usage, latency, and estimated cost
+- **Docker support** — full stack (PostgreSQL + FastAPI + React) via `docker compose up --build`
+
+---
+
 ## Architecture Overview
 
 ### Tech Stack
@@ -140,19 +152,13 @@ The easiest way to run the full stack (PostgreSQL + backend + frontend) without 
 
 ### 1. Configure API Keys
 
-```bash
-cp .env.docker .env.docker.local
-```
-
-Edit `.env.docker.local` and fill in your real API keys:
+Edit `.env.docker` and fill in your real API keys:
 
 ```
 ANTHROPIC_API_KEY=your-key-here
 OPENAI_API_KEY=your-key-here
 GOOGLE_API_KEY=your-key-here
 ```
-
-Or edit `.env.docker` directly (do not commit real keys).
 
 ### 2. Build and Start
 
@@ -163,6 +169,7 @@ docker compose -f docker/docker-compose.yml up --build
 - Frontend: http://localhost:5173
 - Backend API: http://localhost:8000
 - API docs: http://localhost:8000/docs
+- PostgreSQL: `localhost:5450` (host-side port; the backend connects internally on port 5432)
 
 ### 3. Run Migrations
 
@@ -188,4 +195,4 @@ docker compose -f docker/docker-compose.yml down -v
 
 ## Project Status
 
-**Phase 1: Foundation — In Progress**
+**Phase 5: Complete — MVP**
