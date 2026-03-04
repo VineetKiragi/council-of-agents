@@ -44,6 +44,9 @@ async def create_session(
     body: SessionCreate,
     db: DbSession = Depends(get_db),
 ) -> Session:
+    if not body.prompt.strip():
+        raise HTTPException(status_code=400, detail="prompt must not be empty")
+
     orchestrator = DeliberationOrchestrator(db=db, callback=None)
 
     try:
@@ -76,6 +79,9 @@ async def create_session_quick(
     body: SessionCreate,
     db: DbSession = Depends(get_db),
 ) -> Session:
+    if not body.prompt.strip():
+        raise HTTPException(status_code=400, detail="prompt must not be empty")
+
     session = Session(id=uuid.uuid4(), prompt=body.prompt, status="in_progress")
     db.add(session)
     db.commit()

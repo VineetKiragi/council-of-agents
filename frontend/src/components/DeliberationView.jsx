@@ -60,19 +60,27 @@ export default function DeliberationView({ messages, revealMap }) {
   );
 }
 
+// Agent errors are always wrapped in brackets: "[Anthropic API error: ...]"
+function isErrorContent(content) {
+  return content.startsWith("[") && content.toLowerCase().includes("error");
+}
+
 function MessageCard({ message, reveal }) {
   const { agent_pseudonym, round_number, content } = message;
   const isChairman = round_number === 0;
+  const isError = isErrorContent(content);
 
-  // If revealed, show "Agent A — Analytical (OpenAI)"
-  // If not yet revealed, show just the pseudonym
   const roleLabel = reveal ? `${agent_pseudonym} — ${reveal.role}` : agent_pseudonym;
   const providerStyle = reveal ? (PROVIDER_STYLE[reveal.provider] ?? null) : null;
 
   return (
     <div
       className="message-card"
-      style={{ ...styles.card, ...(isChairman ? styles.chairmanCard : {}) }}
+      style={{
+        ...styles.card,
+        ...(isChairman ? styles.chairmanCard : {}),
+        ...(isError ? styles.errorCard : {}),
+      }}
     >
       <div style={styles.cardHeader}>
         <span style={{ ...styles.pseudonym, ...(isChairman ? styles.chairmanPseudonym : {}) }}>
@@ -135,6 +143,10 @@ const styles = {
   chairmanCard: {
     border: "1px solid #646cff",
     backgroundColor: "#f5f4ff",
+  },
+  errorCard: {
+    border: "1px solid #f59e0b",
+    backgroundColor: "#fffbeb",
   },
   cardHeader: {
     display: "flex",

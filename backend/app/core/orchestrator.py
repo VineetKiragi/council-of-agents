@@ -261,9 +261,16 @@ class DeliberationOrchestrator:
     # ------------------------------------------------------------------
 
     async def _fire(self, data: dict[str, Any]) -> None:
-        """Send a real-time update via the callback if one is registered."""
+        """Send a real-time update via the callback if one is registered.
+
+        Silently swallows all exceptions so a disconnected WebSocket client
+        (or any other callback failure) never interrupts the deliberation.
+        """
         if self.callback is not None:
-            await self.callback(data)
+            try:
+                await self.callback(data)
+            except Exception as exc:
+                logger.debug("Callback failed (client likely disconnected): %s", exc)
 
     @staticmethod
     def _msg_to_dict(msg: Message) -> dict[str, Any]:

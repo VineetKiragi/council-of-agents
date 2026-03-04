@@ -72,7 +72,10 @@ export function startDeliberation(prompt, onMessage, onComplete, onError) {
   });
 
   ws.addEventListener("error", () => {
-    onError({ detail: "WebSocket connection error" });
+    onError({
+      detail:
+        "Could not connect to the backend. Make sure the server is running on localhost:8000.",
+    });
   });
 
   return ws;
