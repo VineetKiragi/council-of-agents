@@ -1,4 +1,6 @@
 import { useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 const ROUND_LABEL = {
   1: "Round 1: Initial Positions",
@@ -7,17 +9,16 @@ const ROUND_LABEL = {
   0: "Chairman's Synthesis",
 };
 
-const STATUS_COLOR = {
-  pending: "#888",
-  in_progress: "#f0a500",
-  completed: "#4caf50",
-  failed: "#e53935",
+// Provider badge colours: light background, darker text
+const PROVIDER_STYLE = {
+  anthropic: { backgroundColor: "#dbeafe", color: "#1e40af", label: "Anthropic" },
+  openai:    { backgroundColor: "#dcfce7", color: "#166534", label: "OpenAI" },
+  google:    { backgroundColor: "#ffedd5", color: "#9a3412", label: "Google" },
 };
 
-export default function DeliberationView({ messages }) {
+export default function DeliberationView({ messages, revealMap }) {
   const bottomRef = useRef(null);
 
-  // Auto-scroll to the latest message whenever a new one arrives
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length]);
@@ -26,7 +27,6 @@ export default function DeliberationView({ messages }) {
     return <p style={styles.empty}>Waiting for agents…</p>;
   }
 
-  // Group by round_number; display rounds 1→2→3→0 (chairman last)
   const byRound = {};
   for (const msg of messages) {
     (byRound[msg.round_number] ??= []).push(msg);
@@ -46,7 +46,11 @@ export default function DeliberationView({ messages }) {
           </div>
           <div style={styles.thread}>
             {byRound[roundNum].map((msg) => (
-              <MessageCard key={msg.id ?? `${msg.agent_pseudonym}-${roundNum}`} message={msg} />
+              <MessageCard
+                key={msg.id ?? `${msg.agent_pseudonym}-${roundNum}`}
+                message={msg}
+                reveal={revealMap?.[msg.agent_pseudonym] ?? null}
+              />
             ))}
           </div>
         </div>
@@ -56,12 +60,14 @@ export default function DeliberationView({ messages }) {
   );
 }
 
-function MessageCard({ message }) {
-  const { agent_pseudonym, agent_role, agent_provider, round_number, content } = message;
-
+function MessageCard({ message, reveal }) {
+  const { agent_pseudonym, round_number, content } = message;
   const isChairman = round_number === 0;
 
-  const subtitle = [agent_role, agent_provider].filter(Boolean).join(" · ");
+  // If revealed, show "Agent A — Analytical (OpenAI)"
+  // If not yet revealed, show just the pseudonym
+  const roleLabel = reveal ? `${agent_pseudonym} — ${reveal.role}` : agent_pseudonym;
+  const providerStyle = reveal ? (PROVIDER_STYLE[reveal.provider] ?? null) : null;
 
   return (
     <div
@@ -70,11 +76,17 @@ function MessageCard({ message }) {
     >
       <div style={styles.cardHeader}>
         <span style={{ ...styles.pseudonym, ...(isChairman ? styles.chairmanPseudonym : {}) }}>
-          {agent_pseudonym}
+          {roleLabel}
         </span>
-        {subtitle && <span style={styles.subtitle}>{subtitle}</span>}
+        {providerStyle && (
+          <span style={{ ...styles.providerBadge, ...providerStyle }}>
+            {providerStyle.label}
+          </span>
+        )}
       </div>
-      <p style={styles.content}>{content}</p>
+      <div className="md-content">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+      </div>
     </div>
   );
 }
@@ -95,7 +107,6 @@ const styles = {
   roundHeader: {
     display: "flex",
     alignItems: "center",
-    gap: "0.75rem",
   },
   roundLabel: {
     fontSize: "0.78rem",
@@ -127,9 +138,10 @@ const styles = {
   },
   cardHeader: {
     display: "flex",
-    alignItems: "baseline",
+    alignItems: "center",
     gap: "0.6rem",
     marginBottom: "0.5rem",
+    flexWrap: "wrap",
   },
   pseudonym: {
     fontWeight: 700,
@@ -139,14 +151,11 @@ const styles = {
   chairmanPseudonym: {
     color: "#4f46e5",
   },
-  subtitle: {
-    fontSize: "0.78rem",
-    color: "#999",
-  },
-  content: {
-    margin: 0,
-    lineHeight: 1.6,
-    color: "#213547",
-    whiteSpace: "pre-wrap",
+  providerBadge: {
+    fontSize: "0.7rem",
+    fontWeight: 600,
+    padding: "0.15em 0.55em",
+    borderRadius: "10px",
+    letterSpacing: "0.03em",
   },
 };

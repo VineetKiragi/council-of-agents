@@ -1,9 +1,15 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
-import { startDeliberation, getSessions, getSession } from "./services/api";
+import {
+  startDeliberation,
+  getSessions,
+  getSession,
+  revealSession,
+  getSessionStats,
+} from "./services/api";
 import SubmitPanel from "./components/SubmitPanel";
 import DeliberationView from "./components/DeliberationView";
-import ResultPanel from "./components/ResultPanel";
+import StatsPanel from "./components/StatsPanel";
 
 export default function App() {
   const [currentSession, setCurrentSession] = useState(null);
@@ -12,6 +18,10 @@ export default function App() {
   const [deliberating, setDeliberating] = useState(false);
   const [error, setError] = useState(null);
 
+  // Reveal & stats state
+  const [revealMap, setRevealMap] = useState(null); // pseudonym → {role, provider}
+  const [stats, setStats] = useState(null);
+
   const wsRef = useRef(null);
 
   useEffect(() => {
@@ -19,33 +29,31 @@ export default function App() {
       .then(setPastSessions)
       .catch((err) => setError(err.message));
 
-    // Close any open WS on unmount
     return () => wsRef.current?.close();
   }, []);
 
   function handleSubmit(prompt) {
-    // Close any previous connection
     wsRef.current?.close();
-
     setError(null);
     setMessages([]);
     setCurrentSession(null);
+    setRevealMap(null);
+    setStats(null);
     setDeliberating(true);
 
-    // Return a Promise so SubmitPanel's "Thinking…" spans the full deliberation
     return new Promise((resolve) => {
       wsRef.current = startDeliberation(
         prompt,
-
-        // onMessage — append each arriving agent response
         (msg) => setMessages((prev) => [...prev, msg]),
-
-        // onComplete — fetch the finished session for ResultPanel + refresh sidebar
         async (data) => {
           setDeliberating(false);
           try {
-            const session = await getSession(data.session_id);
+            const [session, statsData] = await Promise.all([
+              getSession(data.session_id),
+              getSessionStats(data.session_id),
+            ]);
             setCurrentSession(session);
+            setStats(statsData);
             setPastSessions((prev) => [
               session,
               ...prev.filter((s) => s.id !== session.id),
@@ -55,8 +63,6 @@ export default function App() {
           }
           resolve();
         },
-
-        // onError
         (data) => {
           setDeliberating(false);
           setError(data.detail || "Deliberation failed");
@@ -67,19 +73,44 @@ export default function App() {
   }
 
   async function handleSelectSession(sessionId) {
-    // Close any running deliberation
     wsRef.current?.close();
     setDeliberating(false);
     setError(null);
+    setRevealMap(null);
+    setStats(null);
 
     try {
       const session = await getSession(sessionId);
       setCurrentSession(session);
       setMessages(session.messages ?? []);
+      if (session.status === "completed") {
+        const statsData = await getSessionStats(sessionId);
+        setStats(statsData);
+      }
     } catch (err) {
       setError(err.message);
     }
   }
+
+  async function handleReveal() {
+    if (!currentSession) return;
+    try {
+      const data = await revealSession(currentSession.id);
+      const map = {};
+      for (const msg of data.messages) {
+        map[msg.agent_pseudonym] = {
+          role: msg.agent_role,
+          provider: msg.agent_provider,
+        };
+      }
+      setRevealMap(map);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  const isCompleted = currentSession?.status === "completed";
+  const canReveal = isCompleted && !revealMap && !deliberating;
 
   return (
     <>
@@ -113,8 +144,18 @@ export default function App() {
 
         {(messages.length > 0 || currentSession) && (
           <>
-            <DeliberationView messages={messages} />
-            {currentSession && <ResultPanel session={currentSession} />}
+            <DeliberationView messages={messages} revealMap={revealMap} />
+
+            {canReveal && (
+              <button className="reveal-btn" onClick={handleReveal}>
+                Reveal Agents
+              </button>
+            )}
+            {revealMap && (
+              <p className="revealed-indicator">Agent identities revealed</p>
+            )}
+
+            <StatsPanel stats={stats} />
           </>
         )}
       </main>

@@ -49,14 +49,14 @@ python -m backend.test_agent
 ```
 backend/app/
 ├── api/routes/       # REST endpoints (health, sessions)
-├── api/websocket/    # WebSocket handlers — NOT BUILT YET
-├── core/             # Deliberation orchestration engine — NOT BUILT YET
-├── agents/           # LLM provider adapters (base.py, anthropic_agent.py, agent_config.py)
+├── api/websocket/    # WebSocket handlers (deliberation.py — /ws/deliberate)
+├── core/             # Deliberation orchestration engine (orchestrator.py)
+├── agents/           # LLM provider adapters + factory + agent_config
 ├── db/               # SQLAlchemy models and database connection
 ├── models/           # Pydantic request/response schemas
 └── observability/    # Logging, tracing, metrics — NOT BUILT YET
 
-frontend/             # React + Vite app — NOT BUILT YET
+frontend/             # React + Vite app (SubmitPanel, DeliberationView, ResultPanel)
 ```
 
 ---
@@ -75,7 +75,11 @@ frontend/             # React + Vite app — NOT BUILT YET
 
 **Phase 1** — complete (project structure, docs, ADRs)
 
-**Phase 2** — in progress
+**Phase 2** — complete (backend infrastructure, DB, all agent adapters, REST API)
+
+**Phase 3** — complete
+
+Full multi-agent orchestration working — 5 agents (Chairman + 4 council members) across 3 providers (Anthropic, OpenAI, Google), 3 rounds of anonymised deliberation + chairman synthesis. WebSocket streams messages to frontend in real-time. REST endpoints still available for session history.
 
 | Component | Status |
 |---|---|
@@ -86,19 +90,23 @@ frontend/             # React + Vite app — NOT BUILT YET
 | Alembic setup + first migration (tables in DB) | ✅ done |
 | `agents/base.py` — BaseAgent ABC | ✅ done |
 | `agents/anthropic_agent.py` — Anthropic adapter | ✅ done |
+| `agents/openai_agent.py` — OpenAI adapter | ✅ done |
+| `agents/google_agent.py` — Google Gemini adapter | ✅ done |
 | `agents/agent_config.py` — 5 role definitions | ✅ done |
+| `agents/factory.py` — create_agent / create_all_agents | ✅ done |
+| `core/orchestrator.py` — DeliberationOrchestrator | ✅ done |
 | `api/routes/health.py` — GET /api/health | ✅ done |
-| `api/routes/sessions.py` — POST/GET /api/sessions | ✅ done (single-agent prototype) |
+| `api/routes/sessions.py` — POST/GET /api/sessions | ✅ done |
+| `api/routes/sessions.py` — POST /api/sessions/quick | ✅ done (single-agent, for testing) |
+| `api/websocket/deliberation.py` — WS /ws/deliberate | ✅ done |
 | `main.py` — FastAPI app, CORS, router registration | ✅ done |
-| OpenAI agent adapter | ❌ not built |
-| Google agent adapter | ❌ not built |
-| Agent factory | ❌ not built |
-| Deliberation orchestrator (core/) | ❌ not built |
-| WebSocket handler | ❌ not built |
-| React frontend | ❌ not built |
+| React frontend — SubmitPanel, DeliberationView, ResultPanel | ✅ done |
+| WebSocket real-time streaming to frontend | ✅ done |
 | Observability | ❌ not built |
 
-**Next up:** OpenAI adapter → Google adapter → agent factory → deliberation orchestrator → wire into POST /sessions
+**Known issues:** UI needs polish; markdown not rendered in agent responses.
+
+**Next up:** UI polish → markdown rendering → identity reveal on session completion → observability
 
 ---
 
@@ -125,4 +133,5 @@ frontend/             # React + Vite app — NOT BUILT YET
 - Never commit `.env` — it contains real API keys
 - The Anthropic adapter is named `anthropic_agent.py` not `anthropic.py` — would conflict with the `anthropic` package name
 - `backend/__init__.py` must exist for `backend.app.*` imports to work from project root
-- `POST /api/sessions` currently runs only a single Anthropic agent — the full multi-agent orchestrator is not wired in yet
+- Google model must be `gemini-2.5-flash` — older names (gemini-1.5-*, gemini-2.0-flash) return 404 on the Cloud Console API key
+- `response.text` on Gemini 2.5 Flash can fail with multi-part responses (thinking tokens); use explicit part-joining instead

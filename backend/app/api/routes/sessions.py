@@ -9,7 +9,8 @@ from backend.app.agents.anthropic_agent import AnthropicAgent
 from backend.app.core.orchestrator import DeliberationOrchestrator
 from backend.app.db.database import get_db
 from backend.app.db.models import Message, Session
-from backend.app.models.schemas import SessionCreate, SessionResponse
+from backend.app.models.schemas import SessionCreate, SessionResponse, SessionReveal
+from backend.app.observability.tracker import SessionTracker
 
 router = APIRouter(prefix="/sessions")
 
@@ -137,3 +138,39 @@ def get_session(session_id: uuid.UUID, db: DbSession = Depends(get_db)) -> Sessi
     if session is None:
         raise HTTPException(status_code=404, detail="Session not found")
     return session
+
+
+# ---------------------------------------------------------------------------
+# GET /sessions/{session_id}/reveal — identities exposed, completed only
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{session_id}/reveal", response_model=SessionReveal)
+def reveal_session(session_id: uuid.UUID, db: DbSession = Depends(get_db)) -> Session:
+    session = db.get(Session, session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if session.status != "completed":
+        raise HTTPException(
+            status_code=400,
+            detail="Reveal is only available after deliberation completes.",
+        )
+    return session
+
+
+# ---------------------------------------------------------------------------
+# GET /sessions/{session_id}/stats — LLMOps stats, completed only
+# ---------------------------------------------------------------------------
+
+
+@router.get("/{session_id}/stats")
+def get_session_stats(session_id: uuid.UUID, db: DbSession = Depends(get_db)) -> dict:
+    session = db.get(Session, session_id)
+    if session is None:
+        raise HTTPException(status_code=404, detail="Session not found")
+    if session.status != "completed":
+        raise HTTPException(
+            status_code=400,
+            detail="Stats are only available after deliberation completes.",
+        )
+    return SessionTracker.get_session_stats(session_id, db)

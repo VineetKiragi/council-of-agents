@@ -33,6 +33,16 @@ export async function getSession(sessionId) {
   return handleResponse(response, "Get session");
 }
 
+export async function revealSession(sessionId) {
+  const response = await fetch(`${API_BASE}/sessions/${sessionId}/reveal`);
+  return handleResponse(response, "Reveal session");
+}
+
+export async function getSessionStats(sessionId) {
+  const response = await fetch(`${API_BASE}/sessions/${sessionId}/stats`);
+  return handleResponse(response, "Get session stats");
+}
+
 export function startDeliberation(prompt, onMessage, onComplete, onError) {
   const ws = new WebSocket("ws://localhost:8000/ws/deliberate");
 
