@@ -1,0 +1,21 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Install dependencies first for better layer caching
+COPY backend/requirements.txt ./backend/requirements.txt
+RUN pip install --no-cache-dir -r backend/requirements.txt
+
+# Copy application code
+COPY backend/ ./backend/
+
+# Copy .env.example as reference — actual secrets should be passed
+# via environment variables or a mounted .env at runtime
+COPY .env.example .env.example
+
+# Ensure the backend package is importable from the project root
+RUN touch __init__.py
+
+EXPOSE 8000
+
+CMD ["uvicorn", "backend.app.main:app", "--host", "0.0.0.0", "--port", "8000"]

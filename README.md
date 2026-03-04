@@ -130,6 +130,62 @@ UI available at `http://localhost:5173`
 
 ---
 
+## Running with Docker
+
+The easiest way to run the full stack (PostgreSQL + backend + frontend) without any local setup.
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed
+
+### 1. Configure API Keys
+
+```bash
+cp .env.docker .env.docker.local
+```
+
+Edit `.env.docker.local` and fill in your real API keys:
+
+```
+ANTHROPIC_API_KEY=your-key-here
+OPENAI_API_KEY=your-key-here
+GOOGLE_API_KEY=your-key-here
+```
+
+Or edit `.env.docker` directly (do not commit real keys).
+
+### 2. Build and Start
+
+```bash
+docker compose -f docker/docker-compose.yml up --build
+```
+
+- Frontend: http://localhost:5173
+- Backend API: http://localhost:8000
+- API docs: http://localhost:8000/docs
+
+### 3. Run Migrations
+
+On first run (or after schema changes):
+
+```bash
+docker compose -f docker/docker-compose.yml exec backend alembic upgrade head
+```
+
+### 4. Stop
+
+```bash
+docker compose -f docker/docker-compose.yml down
+```
+
+To also delete the database volume:
+
+```bash
+docker compose -f docker/docker-compose.yml down -v
+```
+
+---
+
 ## Project Status
 
 **Phase 1: Foundation — In Progress**

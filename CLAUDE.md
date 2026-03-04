@@ -77,36 +77,40 @@ frontend/             # React + Vite app (SubmitPanel, DeliberationView, ResultP
 
 **Phase 2** — complete (backend infrastructure, DB, all agent adapters, REST API)
 
-**Phase 3** — complete
+**Phase 3** — complete (orchestration, WebSocket streaming, React frontend)
 
-Full multi-agent orchestration working — 5 agents (Chairman + 4 council members) across 3 providers (Anthropic, OpenAI, Google), 3 rounds of anonymised deliberation + chairman synthesis. WebSocket streams messages to frontend in real-time. REST endpoints still available for session history.
+**Phase 4** — complete
+
+Full multi-agent orchestration with 5 agents across 3 providers, 3 rounds of anonymised deliberation, real-time WebSocket streaming, agent identity reveal, session stats with token/cost tracking, markdown rendering, and robust error handling throughout.
 
 | Component | Status |
 |---|---|
 | `config.py` — pydantic-settings, loads .env | ✅ done |
 | `db/database.py` — engine, SessionLocal, Base, get_db | ✅ done |
 | `db/models.py` — Session and Message ORM models | ✅ done |
-| `models/schemas.py` — all Pydantic schemas | ✅ done |
+| `models/schemas.py` — Pydantic schemas incl. MessageReveal / SessionReveal | ✅ done |
 | Alembic setup + first migration (tables in DB) | ✅ done |
-| `agents/base.py` — BaseAgent ABC | ✅ done |
+| `agents/base.py` — BaseAgent ABC (max_tokens param) | ✅ done |
 | `agents/anthropic_agent.py` — Anthropic adapter | ✅ done |
 | `agents/openai_agent.py` — OpenAI adapter | ✅ done |
 | `agents/google_agent.py` — Google Gemini adapter | ✅ done |
 | `agents/agent_config.py` — 5 role definitions | ✅ done |
 | `agents/factory.py` — create_agent / create_all_agents | ✅ done |
-| `core/orchestrator.py` — DeliberationOrchestrator | ✅ done |
+| `core/orchestrator.py` — DeliberationOrchestrator (silent callback, error resilience) | ✅ done |
 | `api/routes/health.py` — GET /api/health | ✅ done |
-| `api/routes/sessions.py` — POST/GET /api/sessions | ✅ done |
-| `api/routes/sessions.py` — POST /api/sessions/quick | ✅ done (single-agent, for testing) |
-| `api/websocket/deliberation.py` — WS /ws/deliberate | ✅ done |
+| `api/routes/sessions.py` — POST/GET /api/sessions, /quick, /reveal, /stats | ✅ done |
+| `api/websocket/deliberation.py` — WS /ws/deliberate (5 min timeout, bg completion) | ✅ done |
 | `main.py` — FastAPI app, CORS, router registration | ✅ done |
-| React frontend — SubmitPanel, DeliberationView, ResultPanel | ✅ done |
+| `observability/tracker.py` — SessionTracker (tokens, cost, per-agent/round stats) | ✅ done |
+| React frontend — SubmitPanel, DeliberationView, StatsPanel | ✅ done |
 | WebSocket real-time streaming to frontend | ✅ done |
-| Observability | ❌ not built |
+| Agent identity reveal (GET /reveal → colour-coded provider badges) | ✅ done |
+| Markdown rendering (react-markdown + remark-gfm) | ✅ done |
+| Error card styling for failed agent responses | ✅ done |
+| Docker / containerisation | ❌ not built |
+| Final documentation | ❌ not built |
 
-**Known issues:** UI needs polish; markdown not rendered in agent responses.
-
-**Next up:** UI polish → markdown rendering → identity reveal on session completion → observability
+**Next up:** Phase 5 — Docker (backend + frontend + PostgreSQL), final documentation
 
 ---
 

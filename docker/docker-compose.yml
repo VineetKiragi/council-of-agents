@@ -1,0 +1,52 @@
+services:
+
+  # ── PostgreSQL ─────────────────────────────────────────────────────────────
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: council_of_agents
+      POSTGRES_USER: council_user
+      POSTGRES_PASSWORD: council_dev_123
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5450:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U council_user -d council_of_agents"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  # ── FastAPI backend ────────────────────────────────────────────────────────
+  backend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.backend
+    env_file:
+      - ../.env.docker
+    environment:
+      DATABASE_URL: postgresql://council_user:council_dev_123@db:5432/council_of_agents
+    volumes:
+      - ../backend:/app/backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # ── React / Vite frontend ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.frontend
+    volumes:
+      - ../frontend/src:/app/src
+      - ../frontend/public:/app/public
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
