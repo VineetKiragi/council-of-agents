@@ -1,41 +1,81 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import "./App.css";
-import { createSession, getSessions, getSession } from "./services/api";
+import { startDeliberation, getSessions, getSession } from "./services/api";
 import SubmitPanel from "./components/SubmitPanel";
 import DeliberationView from "./components/DeliberationView";
 import ResultPanel from "./components/ResultPanel";
 
 export default function App() {
   const [currentSession, setCurrentSession] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [pastSessions, setPastSessions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [deliberating, setDeliberating] = useState(false);
   const [error, setError] = useState(null);
+
+  const wsRef = useRef(null);
 
   useEffect(() => {
     getSessions()
       .then(setPastSessions)
       .catch((err) => setError(err.message));
+
+    // Close any open WS on unmount
+    return () => wsRef.current?.close();
   }, []);
 
-  async function handleSubmit(prompt) {
+  function handleSubmit(prompt) {
+    // Close any previous connection
+    wsRef.current?.close();
+
     setError(null);
-    setLoading(true);
-    try {
-      const session = await createSession(prompt);
-      setCurrentSession(session);
-      setPastSessions((prev) => [session, ...prev]);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    setMessages([]);
+    setCurrentSession(null);
+    setDeliberating(true);
+
+    // Return a Promise so SubmitPanel's "Thinking…" spans the full deliberation
+    return new Promise((resolve) => {
+      wsRef.current = startDeliberation(
+        prompt,
+
+        // onMessage — append each arriving agent response
+        (msg) => setMessages((prev) => [...prev, msg]),
+
+        // onComplete — fetch the finished session for ResultPanel + refresh sidebar
+        async (data) => {
+          setDeliberating(false);
+          try {
+            const session = await getSession(data.session_id);
+            setCurrentSession(session);
+            setPastSessions((prev) => [
+              session,
+              ...prev.filter((s) => s.id !== session.id),
+            ]);
+          } catch (err) {
+            setError(err.message);
+          }
+          resolve();
+        },
+
+        // onError
+        (data) => {
+          setDeliberating(false);
+          setError(data.detail || "Deliberation failed");
+          resolve();
+        },
+      );
+    });
   }
 
   async function handleSelectSession(sessionId) {
+    // Close any running deliberation
+    wsRef.current?.close();
+    setDeliberating(false);
     setError(null);
+
     try {
       const session = await getSession(sessionId);
       setCurrentSession(session);
+      setMessages(session.messages ?? []);
     } catch (err) {
       setError(err.message);
     }
@@ -65,12 +105,16 @@ export default function App() {
 
         <SubmitPanel onSubmit={handleSubmit} />
 
+        {deliberating && (
+          <p className="deliberating-indicator">Deliberation in progress…</p>
+        )}
+
         {error && <p className="error-text">{error}</p>}
 
-        {currentSession && (
+        {(messages.length > 0 || currentSession) && (
           <>
-            <DeliberationView session={currentSession} />
-            <ResultPanel session={currentSession} />
+            <DeliberationView messages={messages} />
+            {currentSession && <ResultPanel session={currentSession} />}
           </>
         )}
       </main>

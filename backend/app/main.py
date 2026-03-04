@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.app.api.routes.health import router as health_router
 from backend.app.api.routes.sessions import router as sessions_router
+from backend.app.api.websocket.deliberation import router as ws_router
 
 app = FastAPI(title="Council of Agents API")
 
@@ -15,6 +16,7 @@ app.add_middleware(
 
 app.include_router(health_router, prefix="/api")
 app.include_router(sessions_router, prefix="/api")
+app.include_router(ws_router)
 
 
 @app.get("/")

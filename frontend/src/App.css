@@ -99,6 +99,29 @@ button {
   margin: 0;
 }
 
+.deliberating-indicator {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #f0a500;
+  font-style: italic;
+}
+
+/* ── Message card fade-in ── */
+@keyframes fadeSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.message-card {
+  animation: fadeSlideIn 0.25s ease;
+}
+
 /* ── Submit button ── */
 .submit-btn {
   align-self: flex-end;
