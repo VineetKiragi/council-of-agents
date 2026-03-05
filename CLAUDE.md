@@ -33,6 +33,12 @@ cd backend && python -m pytest -v
 
 # Run tests with coverage (from backend/)
 cd backend && python -m pytest --cov=app -v
+
+# Run linting (from backend/)
+cd backend && ruff check app/
+
+# Run format check (from backend/)
+cd backend && ruff format --check app/
 ```
 
 ---
@@ -76,16 +82,16 @@ frontend/             # React + Vite app (SubmitPanel, DeliberationView, ResultP
 
 ## CURRENT STATE
 
-**Phase 6 — complete (Testing)**
+**Phase 7 — complete (CI/CD)**
 
-22 tests across 4 files, all passing in ~0.39s with zero API costs. Test database: `council_of_agents_test`. Run with: `cd backend && python -m pytest -v`.
+GitHub Actions runs on every push and pull request to `main`. Both jobs passing.
 
-| Layer | File | Tests |
-|---|---|---|
-| Schema validation | `test_schemas.py` | 5 |
-| Agent config + mock interface | `test_agents.py` | 5 |
-| Orchestrator logic (mocked agents) | `test_orchestrator.py` | 4 |
-| API integration (test database) | `test_api.py` | 8 |
+| CI Job | Steps |
+|---|---|
+| `backend-checks` | ruff lint → ruff format check → alembic migrations → 27 pytest tests |
+| `frontend-checks` | npm ci → eslint → vite build |
+
+27 tests across 5 files, all passing with zero API costs. Test database: `council_of_agents_test`.
 
 | Component | Status |
 |---|---|
@@ -113,7 +119,8 @@ frontend/             # React + Vite app (SubmitPanel, DeliberationView, ResultP
 | Error card styling for failed agent responses | ✅ done |
 | Docker — Dockerfile.backend, Dockerfile.frontend, docker-compose.yml | ✅ done |
 | Final documentation — README with Features + Docker section | ✅ done |
-| Testing — pytest + pytest-asyncio, 22 tests, conftest fixtures, mock agents | ✅ done |
+| Testing — pytest + pytest-asyncio, 27 tests, conftest fixtures, mock agents | ✅ done |
+| CI/CD — GitHub Actions, backend-checks + frontend-checks, both passing | ✅ done |
 
 ---
 
