@@ -53,12 +53,10 @@ jobs:
         run: ruff format --check backend/app/
 
       - name: Run migrations
-        working-directory: backend
-        run: alembic upgrade head
+        run: cd backend && PYTHONPATH=.. alembic upgrade head
 
       - name: Run tests
-        working-directory: backend
-        run: python -m pytest -v
+        run: cd backend && PYTHONPATH=.. python -m pytest -v
 
   # ── Job 2: Frontend lint + build ─────────────────────────────────────────
   frontend-checks:
