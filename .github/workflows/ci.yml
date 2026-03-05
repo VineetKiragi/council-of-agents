@@ -7,6 +7,59 @@ on:
     branches: [main]
 
 jobs:
+  # ── Job 1: Backend lint, migrations, tests ───────────────────────────────
+  backend-checks:
+    name: Backend checks
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: council_of_agents_test
+          POSTGRES_USER: council_user
+          POSTGRES_PASSWORD: council_dev_123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U council_user -d council_of_agents_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://council_user:council_dev_123@localhost:5432/council_of_agents_test
+      ANTHROPIC_API_KEY: test-key
+      OPENAI_API_KEY: test-key
+      GOOGLE_API_KEY: test-key
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+          cache-dependency-path: backend/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r backend/requirements.txt
+
+      - name: Ruff lint
+        run: ruff check backend/app/
+
+      - name: Ruff format check
+        run: ruff format --check backend/app/
+
+      - name: Run migrations
+        working-directory: backend
+        run: alembic upgrade head
+
+      - name: Run tests
+        working-directory: backend
+        run: python -m pytest -v
+
   # ── Job 2: Frontend lint + build ─────────────────────────────────────────
   frontend-checks:
     name: Frontend checks
