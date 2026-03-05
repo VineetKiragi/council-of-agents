@@ -233,9 +233,7 @@ class DeliberationOrchestrator:
             by_round.setdefault(msg.round_number, []).append(msg)
 
         sections = [
-            self._build_round_context(
-                by_round[rnum], current_pseudonym, f"Round {rnum}"
-            )
+            self._build_round_context(by_round[rnum], current_pseudonym, f"Round {rnum}")
             for rnum in sorted(by_round)
         ]
         return "\n\n".join(sections)

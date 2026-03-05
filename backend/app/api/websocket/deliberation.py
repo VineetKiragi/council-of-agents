@@ -89,9 +89,7 @@ async def deliberate(websocket: WebSocket) -> None:
     finally:
         if deliberation_task is not None and not deliberation_task.done():
             # Task is still running in the background — close db after it finishes
-            async def _close_db_when_done(
-                task: asyncio.Task, db_session: Any
-            ) -> None:
+            async def _close_db_when_done(task: asyncio.Task, db_session: Any) -> None:
                 try:
                     await task
                 except Exception:

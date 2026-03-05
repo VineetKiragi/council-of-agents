@@ -37,7 +37,4 @@ def create_agent(config: AgentConfig, pseudonym: str) -> BaseAgent:
 
 def create_all_agents() -> list[BaseAgent]:
     configs = get_agent_configs()
-    return [
-        create_agent(config, pseudonym)
-        for config, pseudonym in zip(configs, _PSEUDONYMS)
-    ]
+    return [create_agent(config, pseudonym) for config, pseudonym in zip(configs, _PSEUDONYMS)]

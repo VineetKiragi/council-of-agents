@@ -1,5 +1,4 @@
 import uuid
-from collections import defaultdict
 
 from sqlalchemy.orm import Session as DbSession
 
@@ -8,20 +7,16 @@ from backend.app.db.models import Message
 # Rough blended cost per 1K tokens (input+output averaged) by provider.
 # These are estimates for LLMOps awareness, not billing.
 _COST_PER_1K_TOKENS: dict[str, float] = {
-    "anthropic": 0.015,   # claude-sonnet: ~$3/1M input, $15/1M output → blended ~$15/1M
-    "openai": 0.0004,     # gpt-4o-mini:  $0.15/1M input, $0.60/1M output → blended
-    "google": 0.0002,     # gemini-2.5-flash: ~$0.15/1M input
+    "anthropic": 0.015,  # claude-sonnet: ~$3/1M input, $15/1M output → blended ~$15/1M
+    "openai": 0.0004,  # gpt-4o-mini:  $0.15/1M input, $0.60/1M output → blended
+    "google": 0.0002,  # gemini-2.5-flash: ~$0.15/1M input
 }
 
 
 class SessionTracker:
     @staticmethod
     def get_session_stats(session_id: uuid.UUID, db: DbSession) -> dict:
-        messages: list[Message] = (
-            db.query(Message)
-            .filter(Message.session_id == session_id)
-            .all()
-        )
+        messages: list[Message] = db.query(Message).filter(Message.session_id == session_id).all()
 
         if not messages:
             return {
@@ -36,9 +31,7 @@ class SessionTracker:
         total_latency_ms = sum(m.latency_ms or 0 for m in messages)
 
         estimated_cost = sum(
-            (m.token_usage or 0)
-            / 1000
-            * _COST_PER_1K_TOKENS.get(m.agent_provider, 0.0)
+            (m.token_usage or 0) / 1000 * _COST_PER_1K_TOKENS.get(m.agent_provider, 0.0)
             for m in messages
         )
 
